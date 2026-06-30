@@ -81,10 +81,32 @@
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 25px;
             padding: 10px 0;
             animation: fadeInUp 0.8s ease-out;
+        }
+
+        .grid-top {
+            grid-template-columns: repeat(2, 1fr);
+            margin-bottom: 25px;
+        }
+
+        .grid-bottom {
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        /* Large Card styles for top row */
+        .grid-top .card {
+            padding: 40px 35px;
+            min-height: 240px;
+        }
+
+        .grid-top .card-title {
+            font-size: 1.6rem;
+        }
+
+        .grid-top .card-desc {
+            font-size: 1.05rem;
         }
 
         .card {
@@ -93,7 +115,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid var(--card-border);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative;
             overflow: hidden;
@@ -131,8 +153,12 @@
             display: inline-block;
         }
 
+        .grid-top .card-icon {
+            font-size: 3rem;
+        }
+
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.25rem;
             font-weight: 600;
             margin-bottom: 12px;
             color: #ffffff;
@@ -143,7 +169,7 @@
 
         .card-desc {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.6;
             margin-bottom: 25px;
             flex-grow: 1;
@@ -240,11 +266,17 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 768px) {
-            header h1 {
-                font-size: 2rem;
+        @media (max-width: 992px) {
+            .grid-top {
+                grid-template-columns: 1fr;
             }
-            .grid {
+            .grid-bottom {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .grid-bottom {
                 grid-template-columns: 1fr;
             }
         }
@@ -259,7 +291,8 @@
             <p>ระบบบันทึกความคืบหน้าการเดินทาง แผนที่เชิงโต้ตอบ และสถิติข้อมูลอุทยานแห่งชาติ</p>
         </header>
 
-        <main class="grid">
+        <!-- แถวบน: ปุ่มใหญ่ 2 ปุ่ม -->
+        <main class="grid grid-top">
             <!-- TRAVEL_MAP.html -->
             <a href="TRAVEL_MAP.html" class="card">
                 <div>
@@ -287,14 +320,17 @@
                     <span class="arrow">➔</span>
                 </div>
             </a>
+        </main>
 
+        <!-- แถวล่าง: ปุ่มขนาดปกติ 4 ปุ่ม -->
+        <section class="grid grid-bottom">
             <!-- CHECKLIST.md -->
             <a href="CHECKLIST.md" class="card">
                 <div>
                     <span class="badge badge-md">Markdown</span>
                     <div class="card-icon">✅</div>
-                    <h2 class="card-title">รายการเช็คลิสต์การเดินทาง</h2>
-                    <p class="card-desc">ไฟล์บันทึกประวัติและรายการเช็คลิสต์อุทยานแห่งชาติทั้งหมดที่ได้ไปเยือน พร้อมระบุวันเวลา สถานที่ และรายละเอียดการแวะชาร์จรถไฟฟ้า (EV)</p>
+                    <h2 class="card-title">เช็คลิสต์เดินทาง</h2>
+                    <p class="card-desc">ไฟล์บันทึกประวัติการไปเยือน พร้อมวันเวลาและจุดชาร์จ EV</p>
                 </div>
                 <div class="card-action">
                     <span>เปิดดูเอกสาร</span>
@@ -307,8 +343,8 @@
                 <div>
                     <span class="badge badge-md">Markdown</span>
                     <div class="card-icon">📝</div>
-                    <h2 class="card-title">สรุปข้อมูลการเดินทาง</h2>
-                    <p class="card-desc">ไฟล์สรุปข้อมูลสถิติ ด่านความคืบหน้า เป้าหมาย และประวัติภาพรวมในรูปแบบเอกสาร Markdown เพื่อให้ง่ายต่อการบันทึกและสอดคล้องกับหน้าแดชบอร์ด</p>
+                    <h2 class="card-title">สรุปการเดินทาง</h2>
+                    <p class="card-desc">สรุปสถิติ เป้าหมาย และภาพรวมความคืบหน้าโครงการ</p>
                 </div>
                 <div class="card-action">
                     <span>เปิดดูเอกสาร</span>
@@ -321,8 +357,8 @@
                 <div>
                     <span class="badge badge-txt">Text File</span>
                     <div class="card-icon">📌</div>
-                    <h2 class="card-title">อุทยานที่ยังไม่ได้ไปเยือน</h2>
-                    <p class="card-desc">รายชื่ออุทยานแห่งชาติทั่วประเทศที่ยังไม่ได้เดินทางไปเยือน สำหรับใช้วางแผนการท่องเที่ยวและสำรวจเส้นทางการขับขี่ในอนาคต</p>
+                    <h2 class="card-title">อุทยานที่ยังไม่เคยไป</h2>
+                    <p class="card-desc">รายชื่ออุทยานแห่งชาติทั่วประเทศสำหรับวางแผนเดินทาง</p>
                 </div>
                 <div class="card-action">
                     <span>เปิดดูรายชื่อ</span>
@@ -333,17 +369,17 @@
             <!-- GEMINI.md -->
             <a href="GEMINI.md" class="card">
                 <div>
-                    <span class="badge badge-md">Project Config</span>
+                    <span class="badge badge-md">Config</span>
                     <div class="card-icon">⚙️</div>
-                    <h2 class="card-title">คู่มือและกฎเกณฑ์โครงการ</h2>
-                    <p class="card-desc">ข้อแนะนำและเวิร์กโฟลว์ในการบันทึกข้อมูล (Project Instructions) เช่น การรักษาความสอดคล้องระหว่างประวัติเดินทาง แผนที่ และแดชบอร์ด</p>
+                    <h2 class="card-title">คู่มือโครงการ</h2>
+                    <p class="card-desc">ข้อแนะนำและขั้นตอนรักษาความสอดคล้องของข้อมูล</p>
                 </div>
                 <div class="card-action">
                     <span>เปิดดูคู่มือ</span>
                     <span class="arrow">➔</span>
                 </div>
             </a>
-        </main>
+        </section>
     </div>
 
     <footer>
