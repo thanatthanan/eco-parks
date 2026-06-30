@@ -43,32 +43,44 @@
         }
         .home-btn {
             position: absolute;
-            top: 10px;
+            top: 15px;
             left: 60px;
             z-index: 1000;
-            background: #2d5a27;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
+            background: rgba(45, 90, 39, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             text-decoration: none;
-            font-weight: bold;
-            font-size: 0.9em;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            transition: all 0.3s;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 600;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
         }
         .home-btn:hover {
-            background: #4e9a06;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            background: rgba(78, 154, 6, 0.95);
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 20px rgba(78, 154, 6, 0.4);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        .home-btn span {
+            transition: transform 0.3s ease;
+        }
+        .home-btn:hover span {
+            transform: scale(1.2);
         }
     </style>
 </head>
 <body>
 
-<a href="index.html" class="home-btn">🏠 กลับหน้าหลัก</a>
+<a href="index.html" class="home-btn"><span>🏠</span> กลับหน้าหลัก</a>
 
 <div class="info-box">
     <h3>🌲 บันทึกการเดินทาง</h3>
