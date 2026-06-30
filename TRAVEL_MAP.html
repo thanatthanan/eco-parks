@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>แผนที่การเดินทางอุทยานแห่งชาติ</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Helvetica Neue', Arial, sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        .info-box {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            max-width: 300px;
+        }
+        .legend {
+            position: absolute;
+            bottom: 30px;
+            left: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            line-height: 1.5;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        .legend img {
+            width: 14px;
+            vertical-align: middle;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="info-box">
+    <h3>🌲 บันทึกการเดินทาง</h3>
+    <div id="stats">
+        <b>อุทยานที่ไปแล้ว:</b> 22 แห่ง<br>
+        <b>จังหวัดที่ไปแล้ว:</b> 12 จังหวัด
+    </div>
+    <hr>
+    <div id="details">ชี้ที่จังหวัดเพื่อดูรายละเอียด</div>
+</div>
+
+<div class="legend">
+    <i style="background: #2ecc71"></i> จังหวัดที่ไปแล้ว<br>
+    <i style="background: #ecf0f1; border: 1px solid #bdc3c7"></i> ยังไม่ได้ไป<br>
+    <br>
+    <b>จุดบนแผนที่:</b><br>
+    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png" style="height:15px; margin-right:5px;"> ไปมาแล้ว<br>
+    <img src="https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png" style="height:15px; margin-right:5px;"> ยังไม่เคยไป
+</div>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    const visitedProvinces = [
+        "Prachuap Khiri Khan", "Kanchanaburi", "Phayao", "Chiang Rai", 
+        "Ratchaburi", "Saraburi", "Nakhon Ratchasima", "Prachin Buri", 
+        "Sa Kaeo", "Suphan Buri", "Phetchaburi", "Chaiyaphum"
+    ];
+
+    const visitedParks = [
+        { name: "หาดวนกร", lat: 11.636, lng: 99.697, prov: "ประจวบคีรีขันธ์" },
+        { name: "เอราวัณ", lat: 14.375, lng: 99.144, prov: "กาญจนบุรี" },
+        { name: "ภูซาง", lat: 19.664, lng: 100.378, prov: "พะเยา" },
+        { name: "ดอยหลวง", lat: 19.467, lng: 99.817, prov: "เชียงราย" },
+        { name: "แม่ปืม", lat: 19.354, lng: 99.948, prov: "พะเยา" },
+        { name: "เฉลิมพระเกียรติไทยประจัน", lat: 13.314, lng: 99.471, prov: "ราชบุรี" },
+        { name: "น้ำตกสามหลั่น", lat: 14.437, lng: 100.957, prov: "สระบุรี" },
+        { name: "เจ็ดคด-โป่งก้อนเส้า", lat: 14.483, lng: 101.154, prov: "สระบุรี" },
+        { name: "ทับลาน", lat: 14.218, lng: 102.138, prov: "ปราจีนบุรี" },
+        { name: "ปางสีดา", lat: 13.987, lng: 102.204, prov: "สระแก้ว" },
+        { name: "น้ำตกเจ็ดสาวน้อย", lat: 14.723, lng: 101.192, prov: "สระบุรี" },
+        { name: "เขาใหญ่", lat: 14.438, lng: 101.373, prov: "นครราชสีมา" },
+        { name: "เฉลิมรัตนโกสินทร์", lat: 14.654, lng: 99.297, prov: "กาญจนบุรี" },
+        { name: "พุเตย", lat: 14.945, lng: 99.418, prov: "สุพรรณบุรี" },
+        { name: "แก่งกระจาน", lat: 12.879, lng: 99.531, prov: "เพชรบุรี" },
+        { name: "เขาสามร้อยยอด", lat: 12.188, lng: 99.967, prov: "ประจวบคีรีขันธ์" },
+        { name: "กุยบุรี", lat: 12.115, lng: 99.625, prov: "ประจวบคีรีขันธ์" },
+        { name: "เขื่อนศรีนครินทร์", lat: 14.744, lng: 99.036, prov: "กาญจนบุรี" },
+        { name: "ลำคลองงู", lat: 14.908, lng: 98.736, prov: "กาญจนบุรี" },
+        { name: "ไทรโยค", lat: 14.439, lng: 98.851, prov: "กาญจนบุรี" },
+        { name: "ป่าหินงาม", lat: 15.632, lng: 101.396, prov: "ชัยภูมิ" },
+        { name: "ไทรทอง", lat: 15.869, lng: 101.428, prov: "ชัยภูมิ" }
+    ];
+
+    const unvisitedParks = [
+        { name: "ดอยอินทนนท์", lat: 18.533, lng: 98.558, prov: "เชียงใหม่" },
+        { name: "ดอยสุเทพ-ปุย", lat: 18.855, lng: 98.873, prov: "เชียงใหม่" },
+        { name: "ห้วยน้ำดัง", lat: 19.468, lng: 98.493, prov: "เชียงใหม่" },
+        { name: "ออบหลวง", lat: 18.239, lng: 98.514, prov: "เชียงใหม่" },
+        { name: "ศรีลานนา", lat: 19.296, lng: 99.102, prov: "เชียงใหม่" },
+        { name: "ดอยผ้าห่มปก", lat: 19.920, lng: 99.084, prov: "เชียงใหม่" },
+        { name: "แม่วาง", lat: 18.542, lng: 98.735, prov: "เชียงใหม่" },
+        { name: "ผาแดง", lat: 19.638, lng: 98.803, prov: "เชียงใหม่" },
+        { name: "ถ้ำปลา-น้ำตกผาเสื่อ", lat: 19.463, lng: 97.905, prov: "แม่ฮ่องสอน" },
+        { name: "สาละวิน", lat: 18.178, lng: 97.839, prov: "แม่ฮ่องสอน" },
+        { name: "แม่เงา", lat: 17.847, lng: 97.976, prov: "แม่ฮ่องสอน" },
+        { name: "แจ้ซ้อน", lat: 18.837, lng: 99.436, prov: "ลำปาง" },
+        { name: "ดอยขุนตาน", lat: 18.527, lng: 99.263, prov: "ลำพูน" },
+        { name: "แม่ยม", lat: 18.720, lng: 100.239, prov: "แพร่" },
+        { name: "เวียงโกศัย", lat: 17.890, lng: 99.469, prov: "แพร่" },
+        { name: "ดอยภูคา", lat: 19.108, lng: 101.054, prov: "น่าน" },
+        { name: "ศรีน่าน", lat: 18.266, lng: 100.857, prov: "น่าน" },
+        { name: "ขุนสถาน", lat: 18.215, lng: 100.586, prov: "น่าน" },
+        { name: "ตากสินมหาราช", lat: 16.831, lng: 98.878, prov: "ตาก" },
+        { name: "แม่เมย", lat: 17.467, lng: 98.105, prov: "ตาก" },
+        { name: "ลานสาง", lat: 16.758, lng: 99.006, prov: "ตาก" },
+        { name: "คลองลาน", lat: 16.186, lng: 99.208, prov: "กำแพงเพชร" },
+        { name: "แม่วงก์", lat: 15.887, lng: 99.206, prov: "กำแพงเพชร" },
+        { name: "รามคำแหง", lat: 16.889, lng: 99.653, prov: "สุโขทัย" },
+        { name: "ศรีสัชนาลัย", lat: 17.608, lng: 99.478, prov: "สุโขทัย" },
+        { name: "ภูกระดึง", lat: 16.889, lng: 101.762, prov: "เลย" },
+        { name: "ภูเรือ", lat: 17.514, lng: 101.345, prov: "เลย" },
+        { name: "ภูหินร่องกล้า", lat: 17.002, lng: 100.987, prov: "พิษณุโลก" },
+        { name: "ภูเวียง", lat: 16.684, lng: 102.244, prov: "ขอนแก่น" },
+        { name: "ภูเก้า-ภูพานคำ", lat: 16.948, lng: 102.430, prov: "หนองบัวลำภู" },
+        { name: "น้ำหนาว", lat: 16.730, lng: 101.540, prov: "เพชรบูรณ์" },
+        { name: "เขาค้อ", lat: 16.494, lng: 100.944, prov: "เพชรบูรณ์" },
+        { name: "ตาดโตน", lat: 15.982, lng: 102.008, prov: "ชัยภูมิ" },
+        { name: "ภูพาน", lat: 16.996, lng: 103.838, prov: "สกลนคร" },
+        { name: "ภูสระดอกบัว", lat: 16.152, lng: 104.789, prov: "มุกดาหาร" },
+        { name: "มุกดาหาร", lat: 16.454, lng: 104.750, prov: "ภูผาเทิบ) (มุกดาหาร" },
+        { name: "ผาแต้ม", lat: 15.575, lng: 105.587, prov: "อุบลราชธานี" },
+        { name: "ภูจองนายอย", lat: 14.418, lng: 105.307, prov: "อุบลราชธานี" },
+        { name: "เขาพระวิหาร", lat: 14.424, lng: 104.897, prov: "ศรีสะเกษ" },
+        { name: "ทองผาภูมิ", lat: 14.878, lng: 98.280, prov: "กาญจนบุรี" },
+        { name: "เขาแหลม", lat: 14.913, lng: 98.480, prov: "กาญจนบุรี" },
+        { name: "เขาชะเมา-เขาวง", lat: 12.938, lng: 101.746, prov: "ระยอง" },
+        { name: "เขาคิชฌกูฏ", lat: 12.842, lng: 102.161, prov: "จันทบุรี" },
+        { name: "น้ำตกพลิ้ว", lat: 12.549, lng: 102.200, prov: "จันทบุรี" },
+        { name: "หมู่เกาะช้าง", lat: 11.968, lng: 102.478, prov: "ตราด" },
+        { name: "เขาแหลมหญ้า-หมู่เกาะเสม็ด", lat: 12.560, lng: 101.450, prov: "ระยอง" },
+        { name: "ตาพระยา", lat: 14.201, lng: 102.864, prov: "สระแก้ว" },
+        { name: "เขาสก", lat: 9.069, lng: 98.574, prov: "สุราษฎร์ธานี" },
+        { name: "แก่งกรุง", lat: 9.506, lng: 98.822, prov: "สุราษฎร์ธานี" },
+        { name: "หมู่เกาะอ่างทอง", lat: 9.538, lng: 99.693, prov: "สุราษฎร์ธานี" },
+        { name: "ธารโบกขรณี", lat: 8.112, lng: 98.677, prov: "กระบี่" },
+        { name: "หาดนพรัตน์ธารา-หมู่เกาะพีพี", lat: 8.025, lng: 98.814, prov: "กระบี่" },
+        { name: "หมู่เกาะลันตา", lat: 7.213, lng: 99.069, prov: "กระบี่" },
+        { name: "เขาพนมเบญจา", lat: 8.272, lng: 98.925, prov: "กระบี่" },
+        { name: "อ่าวพังงา", lat: 8.239, lng: 98.506, prov: "พังงา" },
+        { name: "หมู่เกาะสิมิลัน", lat: 8.577, lng: 97.646, prov: "พังงา" },
+        { name: "หมู่เกาะสุรินทร์", lat: 9.400, lng: 97.866, prov: "พังงา" },
+        { name: "เขาหลัก-ลำรู่", lat: 8.626, lng: 98.469, prov: "พังงา" },
+        { name: "เขาลำปี-หาดท้ายเหมือง", lat: 8.462, lng: 98.305, prov: "พังงา" },
+        { name: "เขาหลวง", lat: 8.555, lng: 99.714, prov: "นครศรีธรรมราช" },
+        { name: "เขานัน", lat: 8.832, lng: 99.717, prov: "นครศรีธรรมราช" },
+        { name: "หาดเจ้าไหม", lat: 7.412, lng: 99.335, prov: "ตรัง" },
+        { name: "หมู่เกาะเภตรา", lat: 7.057, lng: 99.444, prov: "ตรัง" },
+        { name: "ตะรุเตา", lat: 6.642, lng: 99.532, prov: "สตูล" },
+        { name: "ทะเลบัน", lat: 6.618, lng: 100.152, prov: "สตูล" },
+        { name: "ใต้ร่มเย็น", lat: 8.785, lng: 99.493, prov: "สุราษฎร์ธานี" },
+        { name: "บูโด-สุไหงปาดี", lat: 6.475, lng: 101.611, prov: "นราธิวาส" },
+        { name: "น้ำตกทรายขาว", lat: 6.599, lng: 101.086, prov: "ปัตตานี" }
+    ];
+
+    const map = L.map('map').setView([13.7367, 100.5231], 6);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Load GeoJSON for Thailand Provinces
+    fetch('https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: function(feature) {
+                    const provName = feature.properties.name;
+                    const isVisited = visitedProvinces.includes(provName);
+                    return {
+                        fillColor: isVisited ? '#2ecc71' : '#ecf0f1',
+                        weight: 1,
+                        opacity: 1,
+                        color: '#bdc3c7',
+                        fillOpacity: 0.7
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    layer.on({
+                        mouseover: function(e) {
+                            const layer = e.target;
+                            layer.setStyle({
+                                weight: 3,
+                                color: '#34495e',
+                                fillOpacity: 0.9
+                            });
+                            document.getElementById('details').innerHTML = `<b>จังหวัด:</b> ${feature.properties.name}`;
+                        },
+                        mouseout: function(e) {
+                            const layer = e.target;
+                            const isVisited = visitedProvinces.includes(feature.properties.name);
+                            layer.setStyle({
+                                weight: 1,
+                                color: '#bdc3c7',
+                                fillOpacity: 0.7
+                            });
+                            document.getElementById('details').innerHTML = 'ชี้ที่จังหวัดเพื่อดูรายละเอียด';
+                        }
+                    });
+                }
+            }).addTo(map);
+        });
+
+    // Add Markers for Visited National Parks
+    visitedParks.forEach(park => {
+        L.marker([park.lat, park.lng])
+            .addTo(map)
+            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}`);
+    });
+
+    const greyIcon = new L.Icon({
+        iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-grey.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    // Add Markers for Unvisited National Parks
+    unvisitedParks.forEach(park => {
+        L.marker([park.lat, park.lng], {icon: greyIcon})
+            .addTo(map)
+            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}<br><span style="color:#7f8c8d;">(ยังไม่เคยไป)</span>`);
+    });
+
+</script>
+
+</body>
+</html>

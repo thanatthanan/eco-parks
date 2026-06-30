@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบันทึกการเดินทางอุทยานแห่งชาติ | National Parks Explorer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anuphan:wght@300;400;500;600;700&family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --card-hover-bg: rgba(255, 255, 255, 0.15);
+            --card-hover-border: rgba(78, 154, 6, 0.5);
+            --text-primary: #ffffff;
+            --text-secondary: #b0bec5;
+            --primary-accent: #8be9fd;
+            --green-accent: #5af78e;
+            --gold-accent: #ffb86c;
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Anuphan', 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        .logo-container {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            display: inline-block;
+            filter: drop-shadow(0 0 10px rgba(90, 247, 142, 0.3));
+            animation: float 4s ease-in-out infinite;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            background: linear-gradient(to right, #ffffff, #8be9fd, #5af78e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 15px;
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            padding: 10px 0;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(225deg, transparent, rgba(255, 255, 255, 0.05));
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            background: var(--card-hover-bg);
+            border-color: var(--card-hover-border);
+            box-shadow: 0 12px 40px 0 rgba(78, 154, 6, 0.25);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            display: inline-block;
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 25px;
+            flex-grow: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 15px;
+            align-self: flex-start;
+        }
+
+        .badge-html {
+            background-color: rgba(90, 247, 142, 0.15);
+            color: var(--green-accent);
+            border: 1px solid rgba(90, 247, 142, 0.3);
+        }
+
+        .badge-md {
+            background-color: rgba(139, 233, 253, 0.15);
+            color: var(--primary-accent);
+            border: 1px solid rgba(139, 233, 253, 0.3);
+        }
+
+        .badge-txt {
+            background-color: rgba(255, 184, 108, 0.15);
+            color: var(--gold-accent);
+            border: 1px solid rgba(255, 184, 108, 0.3);
+        }
+
+        .card-action {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: var(--green-accent);
+            transition: gap 0.2s ease;
+        }
+
+        .card:hover .card-action {
+            gap: 15px;
+        }
+
+        .arrow {
+            font-size: 1.2rem;
+            transition: transform 0.2s ease;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 50px;
+        }
+
+        /* Animations */
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <div class="logo-container">🌲</div>
+            <h1>อุทยานแห่งชาติแห่งประเทศไทย</h1>
+            <p>ระบบบันทึกความคืบหน้าการเดินทาง แผนที่เชิงโต้ตอบ และสถิติข้อมูลอุทยานแห่งชาติ</p>
+        </header>
+
+        <main class="grid">
+            <!-- TRAVEL_MAP.html -->
+            <a href="TRAVEL_MAP.html" class="card">
+                <div>
+                    <span class="badge badge-html">Web App</span>
+                    <div class="card-icon">🗺️</div>
+                    <h2 class="card-title">แผนที่ท่องเที่ยวอุทยานแห่งชาติ</h2>
+                    <p class="card-desc">แผนที่ประเทศไทยเชิงโต้ตอบ (Interactive Map) แสดงหมุดที่ตั้งอุทยานแห่งชาติต่างๆ ที่เคยไปเยือน พร้อมระบบกรองข้อมูลและแสดงรายละเอียดในแต่ละพื้นที่</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูแผนที่</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+
+            <!-- TRAVEL_DASHBOARD.html -->
+            <a href="TRAVEL_DASHBOARD.html" class="card">
+                <div>
+                    <span class="badge badge-html">Web App</span>
+                    <div class="card-icon">📊</div>
+                    <h2 class="card-title">แดชบอร์ดสรุปสถิติ</h2>
+                    <p class="card-desc">หน้าสรุปสถิติและกราฟแสดงความคืบหน้าในการเดินทางเยือนอุทยานแห่งชาติแต่ละแห่ง แบ่งข้อมูลออกเป็นภูมิภาคและจัดหมวดหมู่ความคืบหน้าอย่างละเอียด</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูแดชบอร์ด</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+
+            <!-- CHECKLIST.md -->
+            <a href="CHECKLIST.md" class="card">
+                <div>
+                    <span class="badge badge-md">Markdown</span>
+                    <div class="card-icon">✅</div>
+                    <h2 class="card-title">รายการเช็คลิสต์การเดินทาง</h2>
+                    <p class="card-desc">ไฟล์บันทึกประวัติและรายการเช็คลิสต์อุทยานแห่งชาติทั้งหมดที่ได้ไปเยือน พร้อมระบุวันเวลา สถานที่ และรายละเอียดการแวะชาร์จรถไฟฟ้า (EV)</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูเอกสาร</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+
+            <!-- TRAVEL_DASHBOARD.md -->
+            <a href="TRAVEL_DASHBOARD.md" class="card">
+                <div>
+                    <span class="badge badge-md">Markdown</span>
+                    <div class="card-icon">📝</div>
+                    <h2 class="card-title">สรุปข้อมูลการเดินทาง</h2>
+                    <p class="card-desc">ไฟล์สรุปข้อมูลสถิติ ด่านความคืบหน้า เป้าหมาย และประวัติภาพรวมในรูปแบบเอกสาร Markdown เพื่อให้ง่ายต่อการบันทึกและสอดคล้องกับหน้าแดชบอร์ด</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูเอกสาร</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+
+            <!-- unvisited_parks.txt -->
+            <a href="unvisited_parks.txt" class="card">
+                <div>
+                    <span class="badge badge-txt">Text File</span>
+                    <div class="card-icon">📌</div>
+                    <h2 class="card-title">อุทยานที่ยังไม่ได้ไปเยือน</h2>
+                    <p class="card-desc">รายชื่ออุทยานแห่งชาติทั่วประเทศที่ยังไม่ได้เดินทางไปเยือน สำหรับใช้วางแผนการท่องเที่ยวและสำรวจเส้นทางการขับขี่ในอนาคต</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูรายชื่อ</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+
+            <!-- GEMINI.md -->
+            <a href="GEMINI.md" class="card">
+                <div>
+                    <span class="badge badge-md">Project Config</span>
+                    <div class="card-icon">⚙️</div>
+                    <h2 class="card-title">คู่มือและกฎเกณฑ์โครงการ</h2>
+                    <p class="card-desc">ข้อแนะนำและเวิร์กโฟลว์ในการบันทึกข้อมูล (Project Instructions) เช่น การรักษาความสอดคล้องระหว่างประวัติเดินทาง แผนที่ และแดชบอร์ด</p>
+                </div>
+                <div class="card-action">
+                    <span>เปิดดูคู่มือ</span>
+                    <span class="arrow">➔</span>
+                </div>
+            </a>
+        </main>
+    </div>
+
+    <footer>
+        <p>© 2569 Thailand National Parks Explorer Tracker. All rights reserved.</p>
+    </footer>
+
+</body>
+</html>
