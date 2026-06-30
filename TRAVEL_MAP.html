@@ -46,41 +46,43 @@
             top: 15px;
             left: 60px;
             z-index: 1000;
-            background: rgba(45, 90, 39, 0.85);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            color: #ffffff;
-            padding: 10px 20px;
-            border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: #ffffff;
+            color: #2d5a27;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 1px solid rgba(0, 0, 0, 0.12);
             text-decoration: none;
-            font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-weight: 600;
-            font-size: 0.85rem;
-            letter-spacing: 0.5px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         .home-btn:hover {
-            background: rgba(78, 154, 6, 0.95);
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 6px 20px rgba(78, 154, 6, 0.4);
-            border-color: rgba(255, 255, 255, 0.4);
+            background: #2d5a27;
+            color: #ffffff;
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(45, 90, 39, 0.3);
+            border-color: #2d5a27;
         }
-        .home-btn span {
+        .home-btn svg {
+            width: 20px;
+            height: 20px;
             transition: transform 0.3s ease;
         }
-        .home-btn:hover span {
-            transform: scale(1.2);
+        .home-btn:hover svg {
+            transform: scale(1.1);
         }
     </style>
 </head>
 <body>
 
-<a href="index.html" class="home-btn"><span>🏠</span> กลับหน้าหลัก</a>
+<a href="index.html" class="home-btn" title="กลับหน้าหลัก">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+    </svg>
+</a>
 
 <div class="info-box">
     <h3>🌲 บันทึกการเดินทาง</h3>
