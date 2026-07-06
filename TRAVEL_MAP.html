@@ -86,7 +86,7 @@
 <div class="info-box">
     <h3>🌲 บันทึกการเดินทาง</h3>
     <div id="stats">
-        <b>อุทยานที่ไปแล้ว:</b> 22 แห่ง<br>
+        <b>อุทยานที่ไปแล้ว:</b> 24 แห่ง<br>
         <b>จังหวัดที่ไปแล้ว:</b> 12 จังหวัด
     </div>
     <hr>
@@ -134,7 +134,9 @@
         { name: "ลำคลองงู", lat: 14.908, lng: 98.736, prov: "กาญจนบุรี" },
         { name: "ไทรโยค", lat: 14.439, lng: 98.851, prov: "กาญจนบุรี" },
         { name: "ป่าหินงาม", lat: 15.632, lng: 101.396, prov: "ชัยภูมิ" },
-        { name: "ไทรทอง", lat: 15.869, lng: 101.428, prov: "ชัยภูมิ" }
+        { name: "ไทรทอง", lat: 15.869, lng: 101.428, prov: "ชัยภูมิ" },
+        { name: "ทองผาภูมิ", lat: 14.878, lng: 98.280, prov: "กาญจนบุรี" },
+        { name: "เขาแหลม", lat: 14.913, lng: 98.480, prov: "กาญจนบุรี" }
     ];
 
     const unvisitedParks = [
@@ -177,8 +179,6 @@
         { name: "ผาแต้ม", lat: 15.575, lng: 105.587, prov: "อุบลราชธานี" },
         { name: "ภูจองนายอย", lat: 14.418, lng: 105.307, prov: "อุบลราชธานี" },
         { name: "เขาพระวิหาร", lat: 14.424, lng: 104.897, prov: "ศรีสะเกษ" },
-        { name: "ทองผาภูมิ", lat: 14.878, lng: 98.280, prov: "กาญจนบุรี" },
-        { name: "เขาแหลม", lat: 14.913, lng: 98.480, prov: "กาญจนบุรี" },
         { name: "เขาชะเมา-เขาวง", lat: 12.938, lng: 101.746, prov: "ระยอง" },
         { name: "เขาคิชฌกูฏ", lat: 12.842, lng: 102.161, prov: "จันทบุรี" },
         { name: "น้ำตกพลิ้ว", lat: 12.549, lng: 102.200, prov: "จันทบุรี" },
@@ -260,7 +260,7 @@
     visitedParks.forEach(park => {
         L.marker([park.lat, park.lng])
             .addTo(map)
-            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}`);
+            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}<br><a href="https://www.google.com/maps/search/?api=1&query=${park.lat},${park.lng}" target="_blank" style="color: #2980b9; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px;">🗺️ ดูบน Google Maps</a>`);
     });
 
     const greyIcon = new L.Icon({
@@ -276,7 +276,7 @@
     unvisitedParks.forEach(park => {
         L.marker([park.lat, park.lng], {icon: greyIcon})
             .addTo(map)
-            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}<br><span style="color:#7f8c8d;">(ยังไม่เคยไป)</span>`);
+            .bindPopup(`<b>อุทยานแห่งชาติ${park.name}</b><br>จ. ${park.prov}<br><span style="color:#7f8c8d;">(ยังไม่เคยไป)</span><br><a href="https://www.google.com/maps/search/?api=1&query=${park.lat},${park.lng}" target="_blank" style="color: #2980b9; text-decoration: none; font-weight: bold; display: inline-block; margin-top: 5px;">🗺️ ดูบน Google Maps</a>`);
     });
 
 </script>
