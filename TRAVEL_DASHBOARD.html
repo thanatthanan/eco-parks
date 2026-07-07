@@ -141,6 +141,101 @@
             transform: translateY(-1px);
             box-shadow: 0 4px 8px rgba(0,0,0,0.15);
         }
+
+        /* Input Form Styles */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .form-group label {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.95em;
+        }
+        .btn-submit {
+            grid-column: 1 / -1;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            margin-top: 10px;
+        }
+        .btn-submit:hover {
+            background: var(--secondary-color);
+        }
+        .btn-submit:active {
+            transform: scale(0.98);
+        }
+        
+        /* Export Sync Styles */
+        .sync-box {
+            background: #f8f9fa;
+            border: 1px dashed var(--secondary-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .sync-box textarea {
+            width: 100%;
+            height: 100px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85em;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            resize: vertical;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        .sync-title {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-copy {
+            padding: 3px 8px;
+            font-size: 0.75em;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-reset {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.85em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-reset:hover {
+            background: #c0392b;
+        }
     </style>
 </head>
 <body>
@@ -155,18 +250,76 @@
     <div class="stats-grid">
         <div class="stat-card">
             <h3>ความสำเร็จ</h3>
-            <p>24 / 156</p>
-            <small>15.4%</small>
+            <p id="overall-success-count">24 / 156</p>
+            <small id="overall-success-percent">15.4%</small>
         </div>
         <div class="stat-card">
             <h3>จังหวัดที่ไปเยือน</h3>
-            <p>12</p>
+            <p id="visited-provinces-count">12</p>
             <small>ทั่วประเทศไทย</small>
         </div>
         <div class="stat-card">
             <h3>ทริปล่าสุด</h3>
-            <p style="font-size: 1.2em;">05 ก.ค. 69</p>
-            <small>ทองผาภูมิ, เขาแหลม</small>
+            <p style="font-size: 1.2em;" id="latest-trip-date">05 ก.ค. 69</p>
+            <small id="latest-trip-parks">ทองผาภูมิ, เขาแหลม</small>
+        </div>
+    </div>
+
+    <div class="content-section">
+        <h2>➕ บันทึกการเดินทางใหม่ (Add Travel Log)</h2>
+        <form id="add-log-form" onsubmit="event.preventDefault(); submitTravelLog();">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="park-select">อุทยานแห่งชาติที่ไปเยือน</label>
+                    <select id="park-select" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="date-input">วันที่ไปเยือน</label>
+                    <input type="date" id="date-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="activity-select">กิจกรรมหลัก</label>
+                    <select id="activity-select" onchange="toggleCustomActivity(this.value);" required>
+                        <option value="✈️ เช็คอิน">✈️ เช็คอิน (Check-in)</option>
+                        <option value="⛺ นอนค้างคืน">⛺ นอนค้างคืน (Camping)</option>
+                        <option value="🧺 ปิกนิกกินข้าวกลางวัน">🧺 ปิกนิกกินข้าวกลางวัน (Picnic)</option>
+                        <option value="🚲 ปั่นจักรยาน">🚲 ปั่นจักรยาน (Cycling)</option>
+                        <option value="🍴 กินข้าวเย็น">🍴 กินข้าวเย็น (Dinner)</option>
+                        <option value="CUSTOM">อื่นๆ (ระบุเอง...)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="custom-activity-group" style="display:none;">
+                    <label for="custom-activity-input">ระบุกิจกรรมอื่น</label>
+                    <input type="text" id="custom-activity-input" placeholder="เช่น 🚶 เดินป่าศึกษาธรรมชาติ">
+                </div>
+            </div>
+            <button type="submit" class="btn-submit">💾 บันทึกการเดินทาง</button>
+        </form>
+
+        <div id="sync-section" class="sync-box" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <h3 style="margin:0; color:var(--primary-color);">📥 ข้อมูลสำหรับนำไปอัปเดตไฟล์ในเครื่อง (Export Sync Code)</h3>
+                <button type="button" class="btn-reset" onclick="resetCustomLogs();">🧹 รีเซ็ตข้อมูลจำลอง</button>
+            </div>
+            <p style="font-size:0.85em; color:#555; margin-top:0;">เพื่ออัปเดตไฟล์ในเครื่องและ Push ขึ้น Git ให้ก๊อบปี้โค้ดด้านล่างไปวางแทนในไฟล์นั้นๆ:</p>
+            
+            <div class="sync-group" style="margin-bottom:10px;">
+                <div class="sync-title">
+                    <span>1. สำหรับเพิ่มลงในตารางประวัติใน TRAVEL_DASHBOARD.md</span>
+                    <button class="btn-copy" onclick="copyText('sync-md-textarea')">คัดลอก</button>
+                </div>
+                <textarea id="sync-md-textarea" readonly></textarea>
+            </div>
+
+            <div class="sync-group">
+                <div class="sync-title">
+                    <span>2. สำหรับอัปเดตสถานะใน CHECKLIST.md (ให้ค้นหาชื่อและแก้เป็นเครื่องหมาย [x])</span>
+                    <button class="btn-copy" onclick="copyText('sync-checklist-textarea')">คัดลอก</button>
+                </div>
+                <textarea id="sync-checklist-textarea" readonly></textarea>
+            </div>
         </div>
     </div>
 
@@ -195,35 +348,8 @@
 
     <div class="content-section">
         <h2>📍 ความคืบหน้าแยกตามภูมิภาค</h2>
-        <div class="progress-container">
-            <div class="progress-item">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>ภาคกลางและภาคตะวันตก</span>
-                    <span>17 แห่ง</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width: 50%;"></div></div>
-            </div>
-            <div class="progress-item">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>ภาคเหนือ</span>
-                    <span>3 แห่ง</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width: 10%;"></div></div>
-            </div>
-            <div class="progress-item">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>ภาคตะวันออก</span>
-                    <span>2 แห่ง</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width: 15%;"></div></div>
-            </div>
-            <div class="progress-item">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <span>ภาคตะวันออกเฉียงเหนือ</span>
-                    <span>2 แห่ง</span>
-                </div>
-                <div class="progress-bar"><div class="progress-fill" style="width: 10%;"></div></div>
-            </div>
+        <div class="progress-container" id="regional-progress-container">
+            <!-- Rendered by JS -->
         </div>
     </div>
 
@@ -233,7 +359,672 @@
 </div>
 
 <script>
-    const travelData = [
+    // Database of all 154 unique parks and their provinces from KML
+    const nationalParksDb = [
+        {
+                "name": "กุยบุรี",
+                "prov": "ประจวบคีรีขันธ์"
+        },
+        {
+                "name": "ขุนขาน",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ขุนน่าน",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ขุนพะวอ",
+                "prov": "ตาก"
+        },
+        {
+                "name": "ขุนสถาน",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ขุนแจ",
+                "prov": "เชียงราย"
+        },
+        {
+                "name": "คลองพนม",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "คลองลาน",
+                "prov": "กำแพงเพชร"
+        },
+        {
+                "name": "คลองวังเจ้า",
+                "prov": "กำแพงเพชร"
+        },
+        {
+                "name": "ดอยขุนตาน",
+                "prov": "ลำพูน"
+        },
+        {
+                "name": "ดอยจง",
+                "prov": "ลำปาง"
+        },
+        {
+                "name": "ดอยผากลอง",
+                "prov": "แพร่"
+        },
+        {
+                "name": "ดอยผ้าห่มปก",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ดอยภูคา",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ดอยภูนาง",
+                "prov": "พะเยา"
+        },
+        {
+                "name": "ดอยสอยมาลัย -ไม้กลายเป็นหิน",
+                "prov": "ตาก"
+        },
+        {
+                "name": "ดอยสุเทพ-ปุย",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ดอยหลวง",
+                "prov": "เชียงราย"
+        },
+        {
+                "name": "ดอยอินทนนท์",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ดอยเวียงผา",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ตะรุเตา",
+                "prov": "สตูล"
+        },
+        {
+                "name": "ตากสินมหาราช",
+                "prov": "ตาก"
+        },
+        {
+                "name": "ตาดหมอก",
+                "prov": "เพชรบูรณ์"
+        },
+        {
+                "name": "ตาดโตน",
+                "prov": "ชัยภูมิ"
+        },
+        {
+                "name": "ตาพระยา",
+                "prov": "สระแก้ว"
+        },
+        {
+                "name": "ต้นสักใหญ่ ต้นมเหสักข์",
+                "prov": "อุตรดิตถ์"
+        },
+        {
+                "name": "ถ้ำปลา-น้ำตกผาเสื่อ",
+                "prov": "แม่ฮ่องสอน"
+        },
+        {
+                "name": "ถ้ำผาไท",
+                "prov": "ลำปาง"
+        },
+        {
+                "name": "ถ้ำสะเกิน",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ทองผาภูมิ",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "ทะเลบัน",
+                "prov": "สตูล"
+        },
+        {
+                "name": "ทับลาน",
+                "prov": "ปราจีนบุรี"
+        },
+        {
+                "name": "ทุ่งแสลงหลวง",
+                "prov": "พิษณุโลก"
+        },
+        {
+                "name": "ธารเสด็จ - เกาะพะงันน้ำตกแพง",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "ธารโบกขรณี",
+                "prov": "กระบี่"
+        },
+        {
+                "name": "นันทบุรี",
+                "prov": "น่าน"
+        },
+        {
+                "name": "นายูง-น้ำโสม",
+                "prov": "อุดรธานี"
+        },
+        {
+                "name": "น้ำตกคลองแก้ว",
+                "prov": "ตราด"
+        },
+        {
+                "name": "น้ำตกชาติตระการ",
+                "prov": "พิษณุโลก"
+        },
+        {
+                "name": "น้ำตกซีโป",
+                "prov": "นราธิวาส"
+        },
+        {
+                "name": "น้ำตกทรายขาว",
+                "prov": "ปัตตานี"
+        },
+        {
+                "name": "น้ำตกบัวตอง-น้ำพุเจ็ดสี",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "น้ำตกพลิ้ว",
+                "prov": "จันทบุรี"
+        },
+        {
+                "name": "น้ำตกพาเจริญ",
+                "prov": "ตาก"
+        },
+        {
+                "name": "น้ำตกสามหลั่น",
+                "prov": "สระบุรี"
+        },
+        {
+                "name": "น้ำตกสี่ขีด",
+                "prov": "นครศรีธรรมราช"
+        },
+        {
+                "name": "น้ำตกหงาว",
+                "prov": "ชุมพร"
+        },
+        {
+                "name": "น้ำตกห้วยยาง",
+                "prov": "ประจวบคีรีขันธ์"
+        },
+        {
+                "name": "น้ำตกเจ็ดสาวน้อย",
+                "prov": "สระบุรี"
+        },
+        {
+                "name": "น้ำตกแม่สุรินทร์",
+                "prov": "แม่ฮ่องสอน"
+        },
+        {
+                "name": "น้ำตกโยง",
+                "prov": "นครศรีธรรมราช"
+        },
+        {
+                "name": "น้ำพอง",
+                "prov": "ขอนแก่น"
+        },
+        {
+                "name": "น้ำหนาว",
+                "prov": "เพชรบูรณ์"
+        },
+        {
+                "name": "บางลาง",
+                "prov": "ยะลา"
+        },
+        {
+                "name": "บูโด-สุไหงปาดี",
+                "prov": "นราธิวาส"
+        },
+        {
+                "name": "ปางสีดา",
+                "prov": "สระแก้ว"
+        },
+        {
+                "name": "ป่าหินงาม",
+                "prov": "ชัยภูมิ"
+        },
+        {
+                "name": "ผาแดง",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ผาแต้ม",
+                "prov": "อุบลราชธานี"
+        },
+        {
+                "name": "พุเตย",
+                "prov": "สุพรรณบุรี"
+        },
+        {
+                "name": "ภูกระดึง",
+                "prov": "เลย"
+        },
+        {
+                "name": "ภูจองนายอย",
+                "prov": "อุบลราชธานี"
+        },
+        {
+                "name": "ภูชี้ฟ้า",
+                "prov": "เชียงราย"
+        },
+        {
+                "name": "ภูซาง",
+                "prov": "พะเยา"
+        },
+        {
+                "name": "ภูผาม่าน",
+                "prov": "ขอนแก่น"
+        },
+        {
+                "name": "ภูผายล",
+                "prov": "นครพนม"
+        },
+        {
+                "name": "ภูผาเหล็ก",
+                "prov": "สกลนคร"
+        },
+        {
+                "name": "ภูพาน",
+                "prov": "สกลนคร"
+        },
+        {
+                "name": "ภูลังกา",
+                "prov": "นครพนม"
+        },
+        {
+                "name": "ภูสระดอกบัว",
+                "prov": "มุกดาหาร"
+        },
+        {
+                "name": "ภูสวนทราย",
+                "prov": "เลย"
+        },
+        {
+                "name": "ภูสอยดาว",
+                "prov": "พิษณุโลก"
+        },
+        {
+                "name": "ภูหินจอมธาตุ-ภูพระบาท",
+                "prov": "อุดรธานี"
+        },
+        {
+                "name": "ภูหินร่องกล้า",
+                "prov": "พิษณุโลก"
+        },
+        {
+                "name": "ภูเก้า-ภูพานคำ",
+                "prov": "หนองบัวลำภู"
+        },
+        {
+                "name": "ภูเรือ",
+                "prov": "เลย"
+        },
+        {
+                "name": "ภูเวียง",
+                "prov": "ขอนแก่น"
+        },
+        {
+                "name": "ภูแลนคา",
+                "prov": "ชัยภูมิ"
+        },
+        {
+                "name": "มุกดาหาร",
+                "prov": "ภูผาเทิบ) (มุกดาหาร"
+        },
+        {
+                "name": "รามคำแหง",
+                "prov": "สุโขทัย"
+        },
+        {
+                "name": "ลานสาง",
+                "prov": "ตาก"
+        },
+        {
+                "name": "ลำคลองงู",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "ลำน้ำกก",
+                "prov": "เชียงราย"
+        },
+        {
+                "name": "ลำน้ำกระบุรี",
+                "prov": "ระนอง"
+        },
+        {
+                "name": "ศรีน่าน",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ศรีพังงา",
+                "prov": "พังงา"
+        },
+        {
+                "name": "ศรีลานนา",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ศรีสัชนาลัย",
+                "prov": "สุโขทัย"
+        },
+        {
+                "name": "ศูนย์บริการนักท่องเที่ยว แม่จริม",
+                "prov": "น่าน"
+        },
+        {
+                "name": "ศูนย์บริการนักท่องเที่ยวน้ำตกหงาว",
+                "prov": "ระนอง"
+        },
+        {
+                "name": "สันกาลาคีรี",
+                "prov": "สงขลา"
+        },
+        {
+                "name": "สาละวิน",
+                "prov": "แม่ฮ่องสอน"
+        },
+        {
+                "name": "สิรินาถ",
+                "prov": "ภูเก็ต"
+        },
+        {
+                "name": "หมู่เกาะชุมพร",
+                "prov": "ชุมพร"
+        },
+        {
+                "name": "หมู่เกาะช้าง",
+                "prov": "ตราด"
+        },
+        {
+                "name": "หมู่เกาะระนอง",
+                "prov": "ระนอง"
+        },
+        {
+                "name": "หมู่เกาะลันตา",
+                "prov": "กระบี่"
+        },
+        {
+                "name": "หมู่เกาะสิมิลัน",
+                "prov": "พังงา"
+        },
+        {
+                "name": "หมู่เกาะสุรินทร์",
+                "prov": "พังงา"
+        },
+        {
+                "name": "หมู่เกาะอ่างทอง",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "หมู่เกาะเภตรา",
+                "prov": "ตรัง"
+        },
+        {
+                "name": "หาดขนอม-หมู่เกาะทะเลใต้",
+                "prov": "นครศรีธรรมราช"
+        },
+        {
+                "name": "หาดนพรัตน์ธารา-หมู่เกาะพีพี",
+                "prov": "กระบี่"
+        },
+        {
+                "name": "หาดวนกร",
+                "prov": "ประจวบคีรีขันธ์"
+        },
+        {
+                "name": "หาดเจ้าไหม",
+                "prov": "ตรัง"
+        },
+        {
+                "name": "ห้วยน้ำดัง",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ออบขาน",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "ออบหลวง",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "อ่าวพังงา",
+                "prov": "พังงา"
+        },
+        {
+                "name": "อ่าวมะนาว-เขาตันหยง",
+                "prov": "นราธิวาส"
+        },
+        {
+                "name": "อ่าวสยาม - Ao Siam National Park",
+                "prov": "ประจวบคีรีขันธ์"
+        },
+        {
+                "name": "เขลางค์บรรพต",
+                "prov": "ลำปาง"
+        },
+        {
+                "name": "เขาคิชฌกูฏ",
+                "prov": "จันทบุรี"
+        },
+        {
+                "name": "เขาค้อ",
+                "prov": "เพชรบูรณ์"
+        },
+        {
+                "name": "เขาชะเมา-เขาวง",
+                "prov": "ระยอง"
+        },
+        {
+                "name": "เขานัน",
+                "prov": "นครศรีธรรมราช"
+        },
+        {
+                "name": "เขาน้ำค้าง",
+                "prov": "สงขลา"
+        },
+        {
+                "name": "เขาปู่-เขาย่า",
+                "prov": "พัทลุง"
+        },
+        {
+                "name": "เขาพนมเบญจา",
+                "prov": "กระบี่"
+        },
+        {
+                "name": "เขาพระวิหาร",
+                "prov": "ศรีสะเกษ"
+        },
+        {
+                "name": "เขาลำปี-หาดท้ายเหมือง",
+                "prov": "พังงา"
+        },
+        {
+                "name": "เขาสก",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "เขาสามร้อยยอด",
+                "prov": "ประจวบคีรีขันธ์"
+        },
+        {
+                "name": "เขาสิบห้าชั้น",
+                "prov": "จันทบุรี"
+        },
+        {
+                "name": "เขาหลวง",
+                "prov": "นครศรีธรรมราช"
+        },
+        {
+                "name": "เขาหลัก-ลำรู่",
+                "prov": "พังงา"
+        },
+        {
+                "name": "เขาแหลม",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "เขาใหญ่",
+                "prov": "นครราชสีมา"
+        },
+        {
+                "name": "เขื่อนศรีนครินทร์",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "เจ็ดคด-โป่งก้อนเส้า",
+                "prov": "สระบุรี"
+        },
+        {
+                "name": "เฉลิมพระเกียรติไทยประจัน",
+                "prov": "ราชบุรี"
+        },
+        {
+                "name": "เฉลิมรัตนโกสินทร์",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "เวียงโกศัย",
+                "prov": "แพร่"
+        },
+        {
+                "name": "เอราวัณ",
+                "prov": "กาญจนบุรี"
+        },
+        {
+                "name": "แก่งกระจาน",
+                "prov": "เพชรบุรี"
+        },
+        {
+                "name": "แก่งกรุง",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "แก่งตะนะ",
+                "prov": "อุบลราชธานี"
+        },
+        {
+                "name": "แควน้อย",
+                "prov": "พิษณุโลก"
+        },
+        {
+                "name": "แจ้ซ้อน",
+                "prov": "ลำปาง"
+        },
+        {
+                "name": "แม่ตะไคร้",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "แม่ปิง",
+                "prov": "ลำพูน"
+        },
+        {
+                "name": "แม่ปืม",
+                "prov": "พะเยา"
+        },
+        {
+                "name": "แม่ยม",
+                "prov": "แพร่"
+        },
+        {
+                "name": "แม่วงก์",
+                "prov": "กำแพงเพชร"
+        },
+        {
+                "name": "แม่วะ",
+                "prov": "ลำปาง"
+        },
+        {
+                "name": "แม่วาง",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "แม่สะเรียง",
+                "prov": "แม่ฮ่องสอน"
+        },
+        {
+                "name": "แม่เงา",
+                "prov": "แม่ฮ่องสอน"
+        },
+        {
+                "name": "แม่เมย",
+                "prov": "ตาก"
+        },
+        {
+                "name": "แม่โถ",
+                "prov": "เชียงใหม่"
+        },
+        {
+                "name": "แหลมสน",
+                "prov": "ระนอง"
+        },
+        {
+                "name": "ใต้ร่มเย็น",
+                "prov": "สุราษฎร์ธานี"
+        },
+        {
+                "name": "ไทรทอง",
+                "prov": "ชัยภูมิ"
+        },
+        {
+                "name": "ไทรโยค",
+                "prov": "กาญจนบุรี"
+        }
+];
+
+    const provinceToRegion = {
+        // ภาคเหนือ (Northern Thailand)
+        "เชียงใหม่": "ภาคเหนือ", "เชียงราย": "ภาคเหนือ", "พะเยา": "ภาคเหนือ", "แม่ฮ่องสอน": "ภาคเหนือ",
+        "ลำปาง": "ภาคเหนือ", "ลำพูน": "ภาคเหนือ", "แพร่": "ภาคเหนือ", "น่าน": "ภาคเหนือ",
+        "ตาก": "ภาคเหนือ", "กำแพงเพชร": "ภาคเหนือ", "สุโขทัย": "ภาคเหนือ", "พิษณุโลก": "ภาคเหนือ",
+        "พิจิตร": "ภาคเหนือ", "นครสวรรค์": "ภาคเหนือ", "อุทัยธานี": "ภาคเหนือ", "อุตรดิตถ์": "ภาคเหนือ",
+        "เพชรบูรณ์": "ภาคเหนือ",
+        
+        // ภาคตะวันออกเฉียงเหนือ (Northeastern Thailand)
+        "นครราชสีมา": "ภาคตะวันออกเฉียงเหนือ", "ชัยภูมิ": "ภาคตะวันออกเฉียงเหนือ", "สกลนคร": "ภาคตะวันออกเฉียงเหนือ",
+        "มุกดาหาร": "ภาคตะวันออกเฉียงเหนือ", "อุบลราชธานี": "ภาคตะวันออกเฉียงเหนือ", "ศรีสะเกษ": "ภาคตะวันออกเฉียงเหนือ",
+        "ขอนแก่น": "ภาคตะวันออกเฉียงเหนือ", "เลย": "ภาคตะวันออกเฉียงเหนือ", "หนองบัวลำภู": "ภาคตะวันออกเฉียงเหนือ",
+        "อุดรธานี": "ภาคตะวันออกเฉียงเหนือ", "นครพนม": "ภาคตะวันออกเฉียงเหนือ", "กาฬสินธุ์": "ภาคตะวันออกเฉียงเหนือ",
+        "บึงกาฬ": "ภาคตะวันออกเฉียงเหนือ", "มหาสารคาม": "ภาคตะวันออกเฉียงเหนือ", "ยโสธร": "ภาคตะวันออกเฉียงเหนือ",
+        "ร้อยเอ็ด": "ภาคตะวันออกเฉียงเหนือ", "หนองคาย": "ภาคตะวันออกเฉียงเหนือ", "อำนาจเจริญ": "ภาคตะวันออกเฉียงเหนือ",
+        "สุรินทร์": "ภาคตะวันออกเฉียงเหนือ", "บุรีรัมย์": "ภาคตะวันออกเฉียงเหนือ",
+        
+        // ภาคกลางและภาคตะวันตก (Central & Western Thailand)
+        "กาญจนบุรี": "ภาคกลางและภาคตะวันตก", "สระบุรี": "ภาคกลางและภาคตะวันตก", "สุพรรณบุรี": "ภาคกลางและภาคตะวันตก",
+        "เพชรบุรี": "ภาคกลางและภาคตะวันตก", "ประจวบคีรีขันธ์": "ภาคกลางและภาคตะวันตก", "ราชบุรี": "ภาคกลางและภาคตะวันตก",
+        "นครนายก": "ภาคกลางและภาคตะวันตก", "กรุงเทพมหานคร": "ภาคกลางและภาคตะวันตก", "นนทบุรี": "ภาคกลางและภาคตะวันตก",
+        "ปทุมธานี": "ภาคกลางและภาคตะวันตก", "พระนครศรีอยุธยา": "ภาคกลางและภาคตะวันตก", "อ่างทอง": "ภาคกลางและภาคตะวันตก",
+        "สิงห์บุรี": "ภาคกลางและภาคตะวันตก", "ชัยนาท": "ภาคกลางและภาคตะวันตก", "ลพบุรี": "ภาคกลางและภาคตะวันตก",
+        "สมุทรปราการ": "ภาคกลางและภาคตะวันตก", "สมุทรสงคราม": "ภาคกลางและภาคตะวันตก", "สมุทรสาคร": "ภาคกลางและภาคตะวันตก",
+        
+        // ภาคตะวันออก (Eastern Thailand)
+        "ปราจีนบุรี": "ภาคตะวันออก", "สระแก้ว": "ภาคตะวันออก", "ฉะเชิงเทรา": "ภาคตะวันออก",
+        "ชลบุรี": "ภาคตะวันออก", "ระยอง": "ภาคตะวันออก", "จันทบุรี": "ภาคตะวันออก", "ตราด": "ภาคตะวันออก",
+        
+        // ภาคใต้ (Southern Thailand)
+        "สุราษฎร์ธานี": "ภาคใต้", "กระบี่": "ภาคใต้", "พังงา": "ภาคใต้", "นครศรีธรรมราช": "ภาคใต้",
+        "ตรัง": "ภาคใต้", "สตูล": "ภาคใต้", "ยะลา": "ภาคใต้", "nราธิวาส": "ภาคใต้", "นราธิวาส": "ภาคใต้",
+        "ปัตตานี": "ภาคใต้", "ภูเก็ต": "ภาคใต้", "ชุมพร": "ภาคใต้", "ระนอง": "ภาคใต้",
+        "พัทลุง": "ภาคใต้", "สงขลา": "ภาคใต้"
+    };
+
+    const regionTotals = {
+        "ภาคกลางและภาคตะวันตก": 34,
+        "ภาคเหนือ": 30,
+        "ภาคตะวันออก": 13,
+        "ภาคตะวันออกเฉียงเหนือ": 20,
+        "ภาคใต้": 59
+    };
+
+    // Baseline hardcoded travel logs
+    const baselineTravelData = [
         { id: 24, date: "05 ก.ค. 69", name: "เขาแหลม", prov: "กาญจนบุรี", act: "✈️ เช็คอิน" },
         { id: 23, date: "05 ก.ค. 69", name: "ทองผาภูมิ", prov: "กาญจนบุรี", act: "✈️ เช็คอิน" },
         { id: 22, date: "22 มิ.ย. 69", name: "ไทรทอง", prov: "ชัยภูมิ", act: "🧺 ปิกนิกกินข้าวกลางวัน" },
@@ -260,8 +1051,240 @@
         { id: 1, date: "14 เม.ย. 69", name: "หาดวนกร", prov: "ประจวบคีรีขันธ์", act: "✈️ เช็คอิน" }
     ];
 
-    let currentPage = 1;
+    let travelData = [];
+    // Pages helper
     const rowsPerPage = 5;
+    // Load and Sync custom logs
+    function loadState() {
+        const customLogs = JSON.parse(localStorage.getItem('custom_travel_logs') || "[]");
+        // Combine baseline and custom logs
+        // ID should be auto-incrementing
+        let currentId = baselineTravelData.length + 1;
+        const processedCustom = customLogs.map((log, index) => {
+            return {
+                id: currentId + index,
+                date: log.date,
+                name: log.name,
+                prov: log.prov,
+                act: log.act
+            };
+        });
+        
+        // Custom logs are prepended to the array (newest first, so custom logs go first in ID descending order)
+        travelData = [...processedCustom].reverse().concat(baselineTravelData);
+        
+        updateStats();
+        populateParkSelect();
+        updateSyncSection();
+    }
+
+    function updateStats() {
+        const totalVisited = travelData.length;
+        const percent = ((totalVisited / 156) * 100).toFixed(1);
+        
+        // Update Stats Cards
+        document.getElementById('overall-success-count').innerText = `${totalVisited} / 156`;
+        document.getElementById('overall-success-percent').innerText = `${percent}%`;
+        
+        // Unique Provinces Count
+        const uniqueProvs = new Set(travelData.map(log => log.prov));
+        document.getElementById('visited-provinces-count').innerText = uniqueProvs.size;
+        
+        // Latest Trip
+        if (travelData.length > 0) {
+            // Newest is the first item
+            const latest = travelData[0];
+            
+            // Find other parks visited on the same date to display together
+            const sameDateParks = travelData.filter(log => log.date === latest.date).map(log => log.name);
+            document.getElementById('latest-trip-date').innerText = latest.date;
+            document.getElementById('latest-trip-parks').innerText = sameDateParks.join(', ');
+        }
+        
+        // Regional Progress
+        const regionCounts = {
+            "ภาคกลางและภาคตะวันตก": 0,
+            "ภาคเหนือ": 0,
+            "ภาคตะวันออก": 0,
+            "ภาคตะวันออกเฉียงเหนือ": 0,
+            "ภาคใต้": 0
+        };
+        
+        travelData.forEach(log => {
+            const reg = provinceToRegion[log.prov] || "ภาคกลางและภาคตะวันตก";
+            if (regionCounts[reg] !== undefined) {
+                regionCounts[reg]++;
+            }
+        });
+        
+        const container = document.getElementById('regional-progress-container');
+        container.innerHTML = '';
+        
+        Object.keys(regionCounts).forEach(region => {
+            const count = regionCounts[region];
+            const total = regionTotals[region] || 1;
+            const percentage = ((count / total) * 100).toFixed(0);
+            
+            const htmlItem = `
+            <div class="progress-item">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <span>${region}</span>
+                    <span>${count} แห่ง (เป้าหมาย ${total})</span>
+                </div>
+                <div class="progress-bar"><div class="progress-fill" style="width: ${percentage}%;"></div></div>
+            </div>`;
+            container.innerHTML += htmlItem;
+        });
+    }
+
+    function populateParkSelect() {
+        const select = document.getElementById('park-select');
+        select.innerHTML = '<option value="" disabled selected>-- เลือกอุทยานแห่งชาติ --</option>';
+        
+        // Get already visited names
+        const visitedSet = new Set(travelData.map(log => log.name));
+        
+        // Filter DB for unvisited parks
+        const unvisited = nationalParksDb.filter(park => !visitedSet.has(park.name));
+        
+        unvisited.forEach(park => {
+            select.innerHTML += `<option value="${park.name}|${park.prov}">${park.name} (${park.prov})</option>`;
+        });
+    }
+
+    function toggleCustomActivity(val) {
+        const customGroup = document.getElementById('custom-activity-group');
+        if (val === 'CUSTOM') {
+            customGroup.style.display = 'flex';
+            document.getElementById('custom-activity-input').required = true;
+        } else {
+            customGroup.style.display = 'none';
+            document.getElementById('custom-activity-input').required = false;
+        }
+    }
+
+    function formatDateThai(dateStr) {
+        // Date input format: YYYY-MM-DD -> DD/MM/BE
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const year = parseInt(parts[0]) + 543; // to Buddhist Era
+            const month = parts[1];
+            const day = parts[2];
+            return `${day} / ${month} / ${year}`;
+        }
+        return dateStr;
+    }
+
+    function formatDateShortThai(dateStr) {
+        // Date input format: YYYY-MM-DD -> DD ม.ค. BE
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            const yearShort = (parseInt(parts[0]) + 543).toString().substring(2);
+            const day = parseInt(parts[2]);
+            const monthNames = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
+            const monthIndex = parseInt(parts[1]) - 1;
+            return `${day} ${monthNames[monthIndex]} ${yearShort}`;
+        }
+        return dateStr;
+    }
+
+    function submitTravelLog() {
+        const parkVal = document.getElementById('park-select').value;
+        if (!parkVal) return;
+        
+        const [parkName, parkProv] = parkVal.split('|');
+        const rawDate = document.getElementById('date-input').value;
+        const actSelect = document.getElementById('activity-select').value;
+        
+        let activity = actSelect;
+        if (actSelect === 'CUSTOM') {
+            activity = document.getElementById('custom-activity-input').value.strip();
+        }
+        
+        const formattedDateFull = formatDateThai(rawDate);
+        const formattedDateShort = formatDateShortThai(rawDate);
+        
+        const newLog = {
+            date: formattedDateShort,
+            dateRaw: rawDate,
+            dateBE: formattedDateFull,
+            name: parkName,
+            prov: parkProv,
+            act: activity
+        };
+        
+        const customLogs = JSON.parse(localStorage.getItem('custom_travel_logs') || "[]");
+        customLogs.push(newLog);
+        localStorage.setItem('custom_travel_logs', JSON.stringify(customLogs));
+        
+        // Reset form
+        document.getElementById('add-log-form').reset();
+        document.getElementById('custom-activity-group').style.display = 'none';
+        
+        // Reload state and table
+        loadState();
+        currentPage = 1;
+        renderTable();
+    }
+
+    function updateSyncSection() {
+        const customLogs = JSON.parse(localStorage.getItem('custom_travel_logs') || "[]");
+        const syncSection = document.getElementById('sync-section');
+        
+        if (customLogs.length === 0) {
+            syncSection.style.display = 'none';
+            return;
+        }
+        
+        syncSection.style.display = 'block';
+        
+        // 1. Markdown syntax
+        let mdText = '';
+        customLogs.forEach((log, index) => {
+            const rowNum = baselineTravelData.length + 1 + index;
+            // Clean activity icon
+            let cleanAct = log.act;
+            if (!cleanAct.startsWith('✈️') && !cleanAct.startsWith('⛺') && !cleanAct.startsWith('🧺') && !cleanAct.startsWith('🚲') && !cleanAct.startsWith('🍴')) {
+                cleanAct = '✈️ ' + cleanAct;
+            }
+            mdText += `| ${rowNum} | ${log.date} | ${log.name} | ${log.prov} | ${cleanAct} |\n`;
+        });
+        document.getElementById('sync-md-textarea').value = mdText.trim();
+        
+        // 2. Checklist syntax
+        let checklistText = '';
+        customLogs.forEach(log => {
+            // Format check-in string
+            // Checklist expects activity name without icon
+            let cleanAct = log.act.replace(/[\uD83C-\uDBFF\uDC00-\uDFFF\u2600-\u27BF]/g, '').trim();
+            checklistText += `- [x] **${log.name} (${log.prov})**\n    - ครั้งที่ 1: วันที่ [ ${log.dateBE} ] | กิจกรรม: [ ${cleanAct} ]\n`;
+        });
+        document.getElementById('sync-checklist-textarea').value = checklistText.trim();
+    }
+
+    function copyText(id) {
+        const textarea = document.getElementById(id);
+        textarea.select();
+        document.execCommand('copy');
+        alert('คัดลอกข้อมูลลง คลิปบอร์ด เรียบร้อยแล้วครับ!');
+    }
+
+    function resetCustomLogs() {
+        if (confirm('คุณแน่ใจหรือไม่ว่าต้องการล้างข้อมูลจำลองที่กรอกเพิ่มเข้ามาทั้งหมด?')) {
+            localStorage.removeItem('custom_travel_logs');
+            loadState();
+            currentPage = 1;
+            renderTable();
+        }
+    }
+
+    // Set default date input value to today
+    document.addEventListener("DOMContentLoaded", () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date-input').value = today;
+        loadState();
+    });
+
 
     function renderTable() {
         const tbody = document.getElementById('log-table-body');
@@ -293,7 +1316,7 @@
         renderTable();
     }
 
-    renderTable();
+    // renderTable is called inside DOMContentLoaded
 </script>
 
 </body>
