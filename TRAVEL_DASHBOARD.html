@@ -236,6 +236,97 @@
         .btn-reset:hover {
             background: #c0392b;
         }
+
+        /* Searchable Park Combobox Styles */
+        .combobox-container {
+            position: relative;
+            width: 100%;
+        }
+        .combobox-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .combobox-input-wrapper input {
+            width: 100%;
+            padding-right: 32px !important;
+            box-sizing: border-box;
+        }
+        .combobox-clear-btn {
+            position: absolute;
+            right: 8px;
+            background: transparent;
+            border: none;
+            font-size: 1.1em;
+            color: #999;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 50%;
+            display: none;
+            line-height: 1;
+            transition: color 0.2s, background 0.2s;
+        }
+        .combobox-clear-btn:hover {
+            color: #e74c3c;
+            background: #f0f0f0;
+        }
+        .combobox-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid var(--secondary-color);
+            border-radius: 0 0 8px 8px;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+            margin-top: 2px;
+        }
+        .combobox-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.95em;
+            transition: background 0.15s;
+        }
+        .combobox-item:last-child {
+            border-bottom: none;
+        }
+        .combobox-item:hover, .combobox-item.active {
+            background-color: #eaf5e7;
+            color: var(--primary-color);
+        }
+        .combobox-item mark {
+            background-color: #fff3cd;
+            color: #2d5a27;
+            font-weight: bold;
+            padding: 0 2px;
+            border-radius: 2px;
+        }
+        .combobox-item .item-prov {
+            font-size: 0.8em;
+            color: #666;
+            background: #f1f1f1;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 8px;
+            white-space: nowrap;
+        }
+        .combobox-item:hover .item-prov, .combobox-item.active .item-prov {
+            background: #d4ebd0;
+            color: var(--primary-color);
+        }
+        .combobox-no-result {
+            padding: 15px;
+            text-align: center;
+            color: #888;
+            font-size: 0.9em;
+        }
     </style>
 </head>
 <body>
@@ -270,10 +361,16 @@
         <form id="add-log-form" onsubmit="event.preventDefault(); submitTravelLog();">
             <div class="form-grid">
                 <div class="form-group">
-                    <label for="park-select">อุทยานแห่งชาติที่ไปเยือน</label>
-                    <select id="park-select" required>
-                        <!-- Populated by JS -->
-                    </select>
+                    <label for="park-search-input">อุทยานแห่งชาติที่ไปเยือน (พิมพ์ค้นหาได้ 🔍)</label>
+                    <div class="combobox-container" id="park-combobox">
+                        <div class="combobox-input-wrapper">
+                            <input type="text" id="park-search-input" placeholder="พิมพ์ชื่ออุทยาน เช่น ภูกระดึง, เขาใหญ่..." autocomplete="off" required oninput="handleParkSearchInput(this.value)" onfocus="showParkDropdown()" onkeydown="handleParkKeyDown(event)">
+                            <button type="button" id="park-clear-btn" class="combobox-clear-btn" onclick="clearParkSelection()" title="ล้างการเลือก">✕</button>
+                        </div>
+                        <input type="hidden" id="park-selected-name">
+                        <input type="hidden" id="park-selected-prov">
+                        <div id="park-dropdown" class="combobox-dropdown" style="display: none;"></div>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="date-input">วันที่ไปเยือน</label>
@@ -1141,20 +1238,155 @@
         });
     }
 
+    let currentUnvisitedParks = [];
+    let highlightedIndex = -1;
+
     function populateParkSelect() {
-        const select = document.getElementById('park-select');
-        select.innerHTML = '<option value="" disabled selected>-- เลือกอุทยานแห่งชาติ --</option>';
-        
         // Get already visited names
         const visitedSet = new Set(travelData.map(log => log.name));
         
         // Filter DB for unvisited parks
-        const unvisited = nationalParksDb.filter(park => !visitedSet.has(park.name));
-        
-        unvisited.forEach(park => {
-            select.innerHTML += `<option value="${park.name}|${park.prov}">${park.name} (${park.prov})</option>`;
+        currentUnvisitedParks = nationalParksDb.filter(park => !visitedSet.has(park.name));
+    }
+
+    function renderParkDropdown(parksList, keyword = '') {
+        const dropdown = document.getElementById('park-dropdown');
+        if (!dropdown) return;
+        dropdown.innerHTML = '';
+        highlightedIndex = -1;
+
+        if (parksList.length === 0) {
+            dropdown.innerHTML = '<div class="combobox-no-result">❌ ไม่พบอุทยานที่ตรงกับคำค้นหา</div>';
+            return;
+        }
+
+        parksList.forEach((park, index) => {
+            const item = document.createElement('div');
+            item.className = 'combobox-item';
+            item.dataset.index = index;
+            item.dataset.name = park.name;
+            item.dataset.prov = park.prov;
+            
+            let displayName = park.name;
+            if (keyword) {
+                const safeKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regex = new RegExp(`(${safeKeyword})`, 'gi');
+                displayName = displayName.replace(regex, '<mark>$1</mark>');
+            }
+            
+            item.innerHTML = `
+                <span class="item-name">${displayName}</span>
+                <span class="item-prov">จ. ${park.prov}</span>
+            `;
+            
+            item.addEventListener('mousedown', (e) => {
+                e.preventDefault(); // Prevent input blur before click
+                selectPark(park.name, park.prov);
+            });
+            
+            dropdown.appendChild(item);
         });
     }
+
+    function handleParkSearchInput(val) {
+        const clearBtn = document.getElementById('park-clear-btn');
+        clearBtn.style.display = val ? 'block' : 'none';
+        
+        // Reset hidden selection while typing
+        document.getElementById('park-selected-name').value = '';
+        document.getElementById('park-selected-prov').value = '';
+        
+        const query = val.trim().toLowerCase();
+        const filtered = currentUnvisitedParks.filter(park => 
+            park.name.toLowerCase().includes(query) || 
+            park.prov.toLowerCase().includes(query)
+        );
+        
+        renderParkDropdown(filtered, query);
+        showParkDropdown();
+    }
+
+    function showParkDropdown() {
+        const dropdown = document.getElementById('park-dropdown');
+        if (!dropdown) return;
+        dropdown.style.display = 'block';
+        
+        const inputVal = document.getElementById('park-search-input').value.trim().toLowerCase();
+        const filtered = currentUnvisitedParks.filter(park => 
+            !inputVal || 
+            park.name.toLowerCase().includes(inputVal) || 
+            park.prov.toLowerCase().includes(inputVal)
+        );
+        renderParkDropdown(filtered, inputVal);
+    }
+
+    function hideParkDropdown() {
+        const dropdown = document.getElementById('park-dropdown');
+        if (dropdown) dropdown.style.display = 'none';
+        highlightedIndex = -1;
+    }
+
+    function selectPark(name, prov) {
+        document.getElementById('park-search-input').value = `${name} (${prov})`;
+        document.getElementById('park-selected-name').value = name;
+        document.getElementById('park-selected-prov').value = prov;
+        document.getElementById('park-clear-btn').style.display = 'block';
+        hideParkDropdown();
+    }
+
+    function clearParkSelection() {
+        document.getElementById('park-search-input').value = '';
+        document.getElementById('park-selected-name').value = '';
+        document.getElementById('park-selected-prov').value = '';
+        document.getElementById('park-clear-btn').style.display = 'none';
+        showParkDropdown();
+        document.getElementById('park-search-input').focus();
+    }
+
+    function handleParkKeyDown(e) {
+        const dropdown = document.getElementById('park-dropdown');
+        if (!dropdown) return;
+        const items = dropdown.querySelectorAll('.combobox-item');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            dropdown.style.display = 'block';
+            highlightedIndex = (highlightedIndex + 1) % items.length;
+            updateHighlightedItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+            updateHighlightedItem(items);
+        } else if (e.key === 'Enter') {
+            if (dropdown.style.display !== 'none' && highlightedIndex >= 0 && items[highlightedIndex]) {
+                e.preventDefault();
+                const selectedItem = items[highlightedIndex];
+                selectPark(selectedItem.dataset.name, selectedItem.dataset.prov);
+            }
+        } else if (e.key === 'Escape') {
+            hideParkDropdown();
+        }
+    }
+
+    function updateHighlightedItem(items) {
+        items.forEach((item, idx) => {
+            if (idx === highlightedIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    // Close dropdown on click outside
+    document.addEventListener('click', (e) => {
+        const container = document.getElementById('park-combobox');
+        if (container && !container.contains(e.target)) {
+            hideParkDropdown();
+        }
+    });
 
     function toggleCustomActivity(val) {
         const customGroup = document.getElementById('custom-activity-group');
@@ -1193,16 +1425,37 @@
     }
 
     function submitTravelLog() {
-        const parkVal = document.getElementById('park-select').value;
-        if (!parkVal) return;
+        let parkName = document.getElementById('park-selected-name').value;
+        let parkProv = document.getElementById('park-selected-prov').value;
+        const searchInput = document.getElementById('park-search-input');
+        const searchVal = searchInput.value.trim();
+
+        // If not selected via click/enter, try to auto-match typed value
+        if (!parkName && searchVal) {
+            const match = currentUnvisitedParks.find(p => 
+                p.name === searchVal || 
+                `${p.name} (${p.prov})` === searchVal ||
+                p.name.toLowerCase() === searchVal.toLowerCase()
+            );
+            if (match) {
+                parkName = match.name;
+                parkProv = match.prov;
+            }
+        }
+
+        if (!parkName) {
+            alert('กรุณาเลือกอุทยานแห่งชาติจากรายการค้นหา');
+            searchInput.focus();
+            showParkDropdown();
+            return;
+        }
         
-        const [parkName, parkProv] = parkVal.split('|');
         const rawDate = document.getElementById('date-input').value;
         const actSelect = document.getElementById('activity-select').value;
         
         let activity = actSelect;
         if (actSelect === 'CUSTOM') {
-            activity = document.getElementById('custom-activity-input').value.strip();
+            activity = document.getElementById('custom-activity-input').value.trim();
         }
         
         const formattedDateFull = formatDateThai(rawDate);
@@ -1223,7 +1476,11 @@
         
         // Reset form
         document.getElementById('add-log-form').reset();
+        document.getElementById('park-selected-name').value = '';
+        document.getElementById('park-selected-prov').value = '';
+        document.getElementById('park-clear-btn').style.display = 'none';
         document.getElementById('custom-activity-group').style.display = 'none';
+        hideParkDropdown();
         
         // Reload state and table
         loadState();
