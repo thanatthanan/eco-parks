@@ -357,7 +357,10 @@
     </div>
 
     <div class="content-section">
-        <h2>➕ บันทึกการเดินทางใหม่ (Add Travel Log)</h2>
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            <h2 style="margin: 0;">➕ บันทึกการเดินทางใหม่ (Add Travel Log)</h2>
+            <span id="sync-status-indicator" style="font-size: 0.85em; font-weight: normal; padding: 4px 12px; border-radius: 12px; background: #e0e0e0; color: #555; transition: all 0.3s;">⚪ ตรวจสอบการเชื่อมต่อระบบซิงค์...</span>
+        </div>
         <form id="add-log-form" onsubmit="event.preventDefault(); submitTravelLog();">
             <div class="form-grid">
                 <div class="form-group">
@@ -392,7 +395,11 @@
                     <input type="text" id="custom-activity-input" placeholder="เช่น 🚶 เดินป่าศึกษาธรรมชาติ">
                 </div>
             </div>
-            <button type="submit" class="btn-submit">💾 บันทึกการเดินทาง</button>
+            <div style="margin-top: 15px; display: flex; align-items: center; gap: 8px; font-size: 0.95em; color: #333;">
+                <input type="checkbox" id="git-push-checkbox" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--secondary-color);">
+                <label for="git-push-checkbox" style="cursor: pointer; font-weight: 600; color: var(--primary-color);">🚀 อัปเดตไฟล์ในเครื่องและทำ Git Commit & Push อัตโนมัติในปุ่มเดียว</label>
+            </div>
+            <button type="submit" class="btn-submit" id="btn-save-log">⚡ บันทึกและอัปเดตโค้ดอัตโนมัติ (One-Click Sync)</button>
         </form>
 
         <div id="sync-section" class="sync-box" style="display:none;">
@@ -1154,6 +1161,7 @@
 
     let travelData = [];
     // Pages helper
+    let currentPage = 1;
     const rowsPerPage = 5;
     // Load and Sync custom logs
     function loadState() {
@@ -1177,6 +1185,7 @@
         updateStats();
         populateParkSelect();
         updateSyncSection();
+        renderTable();
     }
 
     function updateStats() {
@@ -1424,7 +1433,28 @@
         return dateStr;
     }
 
-    function submitTravelLog() {
+    async function checkServerStatus() {
+        const badge = document.getElementById('sync-status-indicator');
+        if (!badge) return false;
+        try {
+            const res = await fetch('http://localhost:3000/api/status', { method: 'GET' });
+            if (res.ok) {
+                badge.style.background = '#d4edda';
+                badge.style.color = '#155724';
+                badge.style.border = '1px solid #c3e6cb';
+                badge.innerHTML = '🟢 ระบบซิงค์โค้ดพร้อมทำงาน (Direct Sync Active)';
+                return true;
+            }
+        } catch (e) {
+            badge.style.background = '#fff3cd';
+            badge.style.color = '#856404';
+            badge.style.border = '1px solid #ffeeba';
+            badge.innerHTML = '⚪ โหมดจำลอง (เปิด start.bat เพื่อเปิดโหมดอัปเดตโค้ดจริงในปุ่มเดียว)';
+            return false;
+        }
+    }
+
+    async function submitTravelLog() {
         let parkName = document.getElementById('park-selected-name').value;
         let parkProv = document.getElementById('park-selected-prov').value;
         const searchInput = document.getElementById('park-search-input');
@@ -1452,12 +1482,59 @@
         
         const rawDate = document.getElementById('date-input').value;
         const actSelect = document.getElementById('activity-select').value;
+        const gitPushCheckbox = document.getElementById('git-push-checkbox');
+        const gitPush = gitPushCheckbox ? gitPushCheckbox.checked : false;
         
         let activity = actSelect;
         if (actSelect === 'CUSTOM') {
             activity = document.getElementById('custom-activity-input').value.trim();
         }
-        
+
+        const submitBtn = document.getElementById('btn-save-log');
+        const originalBtnText = submitBtn.innerText;
+        submitBtn.disabled = true;
+        submitBtn.innerText = '⏳ กำลังบันทึกและอัปเดตไฟล์โค้ด...';
+
+        let serverSaved = false;
+        try {
+            const res = await fetch('http://localhost:3000/api/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: parkName,
+                    prov: parkProv,
+                    dateRaw: rawDate,
+                    act: activity,
+                    gitPush: gitPush
+                })
+            });
+            const data = await res.json();
+            if (data.success) {
+                serverSaved = true;
+                let successMsg = `🎉 บันทึกและอัปเดตไฟล์ในเครื่องเรียบร้อยแล้ว!\n- อุทยานแห่งชาติ: ${parkName} (${parkProv})\n- วันที่: ${data.dateShort}`;
+                if (data.gitPushed) {
+                    successMsg += '\n- 🚀 Git Commit & Push ขึ้น GitHub เรียบร้อย!';
+                } else if (data.gitError) {
+                    successMsg += `\n- ⚠️ Git Push แจ้งเตือน: ${data.gitError}`;
+                }
+                alert(successMsg);
+                
+                // Clear simulated logs if any
+                localStorage.removeItem('custom_travel_logs');
+
+                // If running through server, reload page to refresh state
+                if (window.location.protocol.startsWith('http')) {
+                    window.location.reload();
+                    return;
+                }
+            }
+        } catch (e) {
+            console.log('Local sync server not reachable, fallback to localStorage');
+        }
+
+        submitBtn.disabled = false;
+        submitBtn.innerText = originalBtnText;
+
         const formattedDateFull = formatDateThai(rawDate);
         const formattedDateShort = formatDateShortThai(rawDate);
         
@@ -1470,9 +1547,12 @@
             act: activity
         };
         
-        const customLogs = JSON.parse(localStorage.getItem('custom_travel_logs') || "[]");
-        customLogs.push(newLog);
-        localStorage.setItem('custom_travel_logs', JSON.stringify(customLogs));
+        if (!serverSaved) {
+            const customLogs = JSON.parse(localStorage.getItem('custom_travel_logs') || "[]");
+            customLogs.push(newLog);
+            localStorage.setItem('custom_travel_logs', JSON.stringify(customLogs));
+            alert('⚠️ ไม่พบ Local Sync Server: ข้อมูลถูกบันทึกไว้ใน Browser (โหมดจำลอง)\n💡 หากต้องการให้อัปเดตไฟล์โค้ดจริงในปุ่มเดียว กรุณาดับเบิลคลิกไฟล์ start.bat ในโฟลเดอร์โปรเจกต์ครับ!');
+        }
         
         // Reset form
         document.getElementById('add-log-form').reset();
@@ -1543,7 +1623,9 @@
     document.addEventListener("DOMContentLoaded", () => {
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('date-input').value = today;
+        currentPage = 1;
         loadState();
+        checkServerStatus();
     });
 
 
